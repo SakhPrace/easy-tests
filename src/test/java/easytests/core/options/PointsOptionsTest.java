@@ -10,9 +10,12 @@ import easytests.core.services.PointsServiceInterface;
 import easytests.core.services.QuestionsServiceInterface;
 import easytests.core.services.QuizzesServiceInterface;
 import easytests.core.services.SolutionsServiceInterface;
+import easytests.support.PointsSupport;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,6 +34,88 @@ import static org.mockito.Mockito.times;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class PointsOptionsTest {
+
+    private PointsSupport pointsSupport = new PointsSupport();
+
+    private PointsOptionsInterface pointsOptions;
+
+    private PointsServiceInterface pointsService;
+
+    private PointModelInterface pointModel;
+
+    private QuestionModelInterface questionModel;
+
+    private QuestionsServiceInterface questionsService;
+
+    private QuestionsOptionsInterface questionsOptions;
+
+    private QuizzesOptionsInterface quizzesOptions;
+
+    private QuizzesServiceInterface quizzesService;
+
+    private SolutionModelInterface solutionModel;
+
+    private SolutionsServiceInterface solutionService;
+
+    private SolutionsOptionsInterface solutionOptions;
+
+    private List<PointModelInterface> pointsModels;
+
+    private ArgumentCaptor<List> listCaptor;
+
+    @Before
+    public void before() {
+        this.subjectsService = Mockito.mock(SubjectsServiceInterface.class);
+        this.subjectsOptions = Mockito.mock(SubjectsOptionsInterface.class);
+        this.usersService = Mockito.mock(UsersServiceInterface.class);
+
+        this.usersOptions = new UsersOptions();
+        this.usersOptions.setUsersService(this.usersService);
+        this.usersOptions.setSubjectsService(this.subjectsService);
+
+        this.listCaptor = ArgumentCaptor.forClass(List.class);
+    }
+
+    private UsersOptionsTest withUserModel() {
+        this.userModel = this.usersSupport.getModelFixtureMock(0);
+        return this;
+    }
+
+    private UsersOptionsTest withSubjectsModelsFounded() {
+        this.subjectsModels = new ArrayList<>();
+        when(this.subjectsService.findByUser(this.userModel, this.subjectsOptions)).thenReturn(this.subjectsModels);
+        return this;
+    }
+
+    private UsersOptionsTest withSubjectsModelsInjected() {
+        this.subjectsModels = new ArrayList<>();
+        when(this.userModel.getSubjects()).thenReturn(this.subjectsModels);
+        return this;
+    }
+
+
+    private UsersOptionsTest withSubjects() {
+        this.usersOptions.withSubjects(this.subjectsOptions);
+        return this;
+    }
+
+    private UsersOptionsTest withUsersList() {
+        this.usersModels = new ArrayList<>(2);
+        this.usersModels.add(this.usersSupport.getModelFixtureMock(0));
+        this.usersModels.add(this.usersSupport.getModelFixtureMock(1));
+
+        return this;
+    }
+
+    private UsersOptionsTest withSubjectsModelsListsFounded() {
+        this.subjectsModelsLists = new ArrayList<>(2);
+        this.subjectsModelsLists.add(new ArrayList<>());
+        this.subjectsModelsLists.add(new ArrayList<>());
+        when(this.subjectsService.findByUser(this.usersModels.get(0), this.subjectsOptions)).thenReturn(subjectsModelsLists.get(0));
+        when(this.subjectsService.findByUser(this.usersModels.get(1), this.subjectsOptions)).thenReturn(subjectsModelsLists.get(1));
+
+        return this;
+    }
 
     @Test
     public void testWithRelationsOnSingleModel() throws Exception {
