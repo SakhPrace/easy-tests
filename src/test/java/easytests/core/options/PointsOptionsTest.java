@@ -25,8 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.*;
 
 /**
  * @author nikitalpopov
@@ -45,6 +44,8 @@ public class PointsOptionsTest {
 
     private QuestionModelInterface questionModel;
 
+    private List<QuestionModelInterface> questionsModels;
+
     private QuestionsServiceInterface questionsService;
 
     private QuestionsOptionsInterface questionsOptions;
@@ -55,9 +56,13 @@ public class PointsOptionsTest {
 
     private SolutionModelInterface solutionModel;
 
-    private SolutionsServiceInterface solutionService;
+    private List<SolutionModelInterface> solutionsModels;
 
-    private SolutionsOptionsInterface solutionOptions;
+    private List<List<SolutionModelInterface>> solutionsModelsLists;
+
+    private SolutionsServiceInterface solutionsService;
+
+    private SolutionsOptionsInterface solutionsOptions;
 
     private List<PointModelInterface> pointsModels;
 
@@ -65,105 +70,85 @@ public class PointsOptionsTest {
 
     @Before
     public void before() {
-        this.subjectsService = Mockito.mock(SubjectsServiceInterface.class);
-        this.subjectsOptions = Mockito.mock(SubjectsOptionsInterface.class);
-        this.usersService = Mockito.mock(UsersServiceInterface.class);
+        this.questionsService = Mockito.mock(QuestionsServiceInterface.class);
+        this.questionsOptions = Mockito.mock(QuestionsOptionsInterface.class);
+        this.quizzesService = Mockito.mock(QuizzesServiceInterface.class);
+        this.quizzesOptions = Mockito.mock(QuizzesOptionsInterface.class);
+        this.solutionsService = Mockito.mock(SolutionsServiceInterface.class);
+        this.solutionsOptions = Mockito.mock(SolutionsOptionsInterface.class);
+        this.pointsService = Mockito.mock(PointsServiceInterface.class);
 
-        this.usersOptions = new UsersOptions();
-        this.usersOptions.setUsersService(this.usersService);
-        this.usersOptions.setSubjectsService(this.subjectsService);
+        this.pointsOptions = new PointsOptions();
+        this.pointsOptions.setPointsService(this.pointsService);
+        this.pointsOptions.setQuestionsService(this.questionsService);
+        this.pointsOptions.setQuizzesService(this.quizzesService);
+        this.pointsOptions.setSolutionsService(this.solutionsService);
 
         this.listCaptor = ArgumentCaptor.forClass(List.class);
     }
 
-    private UsersOptionsTest withUserModel() {
-        this.userModel = this.usersSupport.getModelFixtureMock(0);
+    private PointsOptionsTest withPointModel() {
+        this.pointModel = this.pointsSupport.getModelFixtureMock(0);
         return this;
     }
 
-    private UsersOptionsTest withSubjectsModelsFounded() {
-        this.subjectsModels = new ArrayList<>();
-        when(this.subjectsService.findByUser(this.userModel, this.subjectsOptions)).thenReturn(this.subjectsModels);
+    private PointsOptionsTest withSolutionsModelsFounded() {
+        this.solutionsModels = new ArrayList<>();
+        when(this.solutionsService.findByPoint(this.pointModel, this.solutionsOptions)).thenReturn(this.solutionsModels);
         return this;
     }
 
-    private UsersOptionsTest withSubjectsModelsInjected() {
-        this.subjectsModels = new ArrayList<>();
-        when(this.userModel.getSubjects()).thenReturn(this.subjectsModels);
+    private PointsOptionsTest withSolutionsModelsInjected() {
+        this.solutionsModels = new ArrayList<>();
+        when(this.pointModel.getSolutions()).thenReturn(this.solutionsModels);
         return this;
     }
 
 
-    private UsersOptionsTest withSubjects() {
-        this.usersOptions.withSubjects(this.subjectsOptions);
+    private PointsOptionsTest withSolutions() {
+        this.pointsOptions.withSolutions(this.solutionsOptions);
         return this;
     }
 
-    private UsersOptionsTest withUsersList() {
-        this.usersModels = new ArrayList<>(2);
-        this.usersModels.add(this.usersSupport.getModelFixtureMock(0));
-        this.usersModels.add(this.usersSupport.getModelFixtureMock(1));
+    private PointsOptionsTest withPointsList() {
+        this.pointsModels = new ArrayList<>(2);
+        this.pointsModels.add(this.pointsSupport.getModelFixtureMock(0));
+        this.pointsModels.add(this.pointsSupport.getModelFixtureMock(1));
 
         return this;
     }
 
-    private UsersOptionsTest withSubjectsModelsListsFounded() {
-        this.subjectsModelsLists = new ArrayList<>(2);
-        this.subjectsModelsLists.add(new ArrayList<>());
-        this.subjectsModelsLists.add(new ArrayList<>());
-        when(this.subjectsService.findByUser(this.usersModels.get(0), this.subjectsOptions)).thenReturn(subjectsModelsLists.get(0));
-        when(this.subjectsService.findByUser(this.usersModels.get(1), this.subjectsOptions)).thenReturn(subjectsModelsLists.get(1));
+    private PointsOptionsTest withSolutionsModelsListsFounded() {
+        this.solutionsModelsLists = new ArrayList<>(2);
+        this.solutionsModelsLists.add(new ArrayList<>());
+        this.solutionsModelsLists.add(new ArrayList<>());
+        when(this.solutionsService.findByPoint(this.pointsModels.get(0), this.solutionsOptions)).thenReturn(solutionsModelsLists.get(0));
+        when(this.solutionsService.findByPoint(this.pointsModels.get(1), this.solutionsOptions)).thenReturn(solutionsModelsLists.get(1));
 
         return this;
     }
 
     @Test
-    public void testWithRelationsOnSingleModel() throws Exception {
+    public void testWithNoRelations() throws Exception {
+        this.withPointModel().withSolutionsModelsFounded();
 
-        final PointModelInterface pointModel = Mockito.mock(PointModelInterface.class);
-        final PointsOptionsInterface pointsOptions = new PointsOptions();
+        final PointModelInterface pointModelWithRelations = this.pointsOptions.withRelations(this.pointModel);
 
-        pointModel.setId(1);
-        given(pointModel.getQuiz()).willReturn(new QuizModelEmpty(1));
-        given(pointModel.getQuestion()).willReturn(new QuestionModelEmpty(1));
+        Assert.assertSame(pointModel, pointModelWithRelations);
+        verify(this.solutionsService, times(0)).findByPoint(any(), any());
+        verify(this.pointModel, times(0)).setSolutions(anyList());
+    }
 
-        final QuizzesServiceInterface quizzesService = Mockito.mock(QuizzesServiceInterface.class);
-        final QuestionsServiceInterface questionsService = Mockito.mock(QuestionsServiceInterface.class);
-        final SolutionsServiceInterface solutionsService = Mockito.mock(SolutionsServiceInterface.class);
+    @Test
+    public void testWithSubjectsRelations() throws Exception {
+        this.withPointModel().withSolutionsModelsFounded().withSolutions();
 
-        pointsOptions.setQuizzesService(quizzesService);
-        pointsOptions.setQuestionsService(questionsService);
-        pointsOptions.setSolutionsService(solutionsService);
+        final PointModelInterface userModelWithRelations = this.usersOptions.withRelations(this.userModel);
 
-        final QuizzesOptionsInterface quizOptions = Mockito.mock(QuizzesOptionsInterface.class);
-        final QuestionsOptionsInterface questionOptions = Mockito.mock(QuestionsOptionsInterface.class);
-        final SolutionsOptionsInterface solutionsOptions = Mockito.mock(SolutionsOptionsInterface.class);
-
-        pointsOptions.withQuiz(quizOptions);
-        pointsOptions.withQuestion(questionOptions);
-        pointsOptions.withSolutions(solutionsOptions);
-
-        final QuizModelInterface quizModel = Mockito.mock(QuizModelInterface.class);
-        final QuestionModelInterface questionModel = Mockito.mock(QuestionModelInterface.class);
-        final List<SolutionModelInterface> solutionsModels = new ArrayList<>();
-        solutionsModels.add(Mockito.mock(SolutionModelInterface.class));
-
-        given(quizzesService.find(pointModel.getQuiz().getId(), quizOptions)).willReturn(quizModel);
-        given(questionsService.find(pointModel.getQuestion().getId(), questionOptions)).willReturn(questionModel);
-        given(solutionsService.findByPoint(pointModel, solutionsOptions)).willReturn(solutionsModels);
-
-        final PointModelInterface pointModelWithRelations = pointsOptions.withRelations(pointModel);
-
-        Assert.assertEquals(pointModel, pointModelWithRelations);
-
-        verify(quizzesService).find(1, quizOptions);
-        verify(questionsService).find(1, questionOptions);
-        verify(solutionsService).findByPoint(pointModel, solutionsOptions);
-
-        verify(pointModel).setQuiz(quizModel);
-        verify(pointModel).setQuestion(questionModel);
-        verify(pointModel).setSolutions(solutionsModels);
-
+        Assert.assertSame(userModel, userModelWithRelations);
+        verify(this.subjectsService, times(1)).findByUser(this.userModel, this.subjectsOptions);
+        verify(this.userModel, times(1)).setSubjects(this.listCaptor.capture());
+        Assert.assertSame(this.subjectsModels, this.listCaptor.getValue());
     }
 
     @Test
